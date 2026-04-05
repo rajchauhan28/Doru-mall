@@ -1,0 +1,40 @@
+<h2>Database & Storage Selection</h2>
+<p class="subtitle">How should we transition from browser storage to a persistent database?</p>
+
+<div class="options">
+  <div class="option" data-choice="supabase" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Supabase (All-in-One)</h3>
+      <p>Seamlessly handles <strong>Database</strong>, <strong>Image Storage</strong>, and <strong>Auth</strong>. We can use their JavaScript client directly in your HTML. Best for maintaining the current structure while adding power.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="vercel" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Vercel Native (Postgres + Blob)</h3>
+      <p>Uses <strong>Vercel Postgres</strong> for data and <strong>Vercel Blob</strong> for images. Requires transitioning to <strong>Next.js</strong> or adding serverless API functions. Best for deep integration with Vercel's ecosystem.</p>
+    </div>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Architectural Shift</div>
+  <div class="mockup-body">
+    <div class="split">
+      <div class="section">
+        <div class="label">Current (Local)</div>
+        <div class="placeholder" style="height: 100px; display: flex; align-items: center; justify-content: center; background: #fee2e2; color: #991b1b; border: 2px dashed #f87171;">
+          Browser LocalStorage<br>(Clears on logout/cache)
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; font-size: 24px;">➡️</div>
+      <div class="section">
+        <div class="label">Future (Cloud)</div>
+        <div class="placeholder" style="height: 100px; display: flex; align-items: center; justify-content: center; background: #dcfce7; color: #166534; border: 2px dashed #4ade80;">
+          Cloud Database + Storage<br>(Persistent across devices)
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

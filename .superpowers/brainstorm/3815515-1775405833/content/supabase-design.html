@@ -1,0 +1,67 @@
+<h2>Supabase Implementation Design</h2>
+<p class="subtitle">Transitioning from LocalStorage to Cloud Persistence</p>
+
+<div class="section">
+  <h3>1. Core Architecture</h3>
+  <div class="mockup">
+    <div class="mockup-body">
+      <div style="display: flex; flex-direction: column; gap: 15px;">
+        <div class="placeholder" style="background: #f0fdf4; border: 1px solid #16a34a; padding: 10px;">
+          <strong>Frontend (index.html)</strong><br>
+          <span style="font-size: 12px; color: #666;">Supabase JS SDK + Modern UI</span>
+        </div>
+        <div style="text-align: center;">⇅ (Real-time Sync)</div>
+        <div class="split">
+          <div class="placeholder" style="background: #eff6ff; border: 1px solid #3b82f6; padding: 10px;">
+            <strong>Database (PostgreSQL)</strong><br>
+            <span style="font-size: 12px; color: #666;">Tables: shops, products, orders</span>
+          </div>
+          <div class="placeholder" style="background: #faf5ff; border: 1px solid #a855f7; padding: 10px;">
+            <strong>Storage (Buckets)</strong><br>
+            <span style="font-size: 12px; color: #666;">Permanent image hosting</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>2. Data Schema</h3>
+  <div class="split">
+    <div class="pros">
+      <h4>Tables</h4>
+      <ul>
+        <li><strong>shops</strong> (id, name, image_url, status, owner_email)</li>
+        <li><strong>products</strong> (id, shop_id, name, price, image_url)</li>
+        <li><strong>orders</strong> (id, customer_details, total, items_json)</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>Image Handling</h4>
+      <ul>
+        <li>Replace <strong>Base64</strong> strings (slow/large) with <strong>Supabase Storage</strong> URLs.</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>3. Key Changes</h3>
+  <ul>
+    <li>Add Supabase SDK script to <code>&lt;head&gt;</code></li>
+    <li>Replace <code>saveState()</code> with Supabase <code>.upsert()</code></li>
+    <li>Replace <code>seedData()</code> with <code>.select()</code> to fetch live data</li>
+  </ul>
+</div>
+
+<p>Does this architecture look right to you?</p>
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Approve & Continue</h3>
+      <p>Proceed to write the design document.</p>
+    </div>
+  </div>
+</div>
