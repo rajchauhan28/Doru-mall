@@ -335,18 +335,18 @@ input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-
 </div>
 
 <script>
-// --- Supabase Config (Placeholders) ---
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+// --- Supabase Config ---
+const SUPABASE_URL = 'https://wtcqfvypjjaynyggphzd.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind0Y3FmdnlwampheW55Z2dwaHpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU0MDY1NTIsImV4cCI6MjA5MDk4MjU1Mn0.miub1_bIM77HPonhjY7FvI_0cXYnaDuCT9ru-QUG0Bc';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // --- State Management ---
 let state = {
   user: JSON.parse(localStorage.getItem('doru_user') || '{"name":"","address":"","phone":""}'),
-  shops: JSON.parse(localStorage.getItem('doru_shops') || '[]'),
-  products: JSON.parse(localStorage.getItem('doru_products') || '{}'),
+  shops: [],
+  products: {},
   cart: JSON.parse(localStorage.getItem('doru_cart') || '[]'),
-  orders: JSON.parse(localStorage.getItem('doru_orders') || '[]'),
+  orders: [],
   vendorAccounts: JSON.parse(localStorage.getItem('doru_vendor_accounts') || '[]'),
   currentView: 'home',
   activeShop: null,
@@ -356,10 +356,7 @@ let state = {
 
 const saveState = () => {
   localStorage.setItem('doru_user', JSON.stringify(state.user));
-  localStorage.setItem('doru_shops', JSON.stringify(state.shops));
-  localStorage.setItem('doru_products', JSON.stringify(state.products));
   localStorage.setItem('doru_cart', JSON.stringify(state.cart));
-  localStorage.setItem('doru_orders', JSON.stringify(state.orders));
   localStorage.setItem('doru_vendor_accounts', JSON.stringify(state.vendorAccounts));
   updateUI();
 };
@@ -416,7 +413,7 @@ function renderShops() {
   const approved = state.shops.filter(s => s.status === 'approved');
   grid.innerHTML = approved.map(s => `
     <div class="card" onclick="openShop('${s.id}')">
-      <img src="${s.image}">
+      <img src="${s.image_url || s.image}">
       <div class="card-body">
         <div class="card-title">${escape(s.name)}</div>
         <div class="card-meta">
@@ -435,7 +432,7 @@ async function openShop(id) {
   
   document.getElementById('shopHeader').innerHTML = `
     <div style="display:flex; gap:20px; align-items:center">
-      <img src="${shop.image}" style="width:100px; height:100px; border-radius:50%; object-fit:cover">
+      <img src="${shop.image_url || shop.image}" style="width:100px; height:100px; border-radius:50%; object-fit:cover">
       <div>
         <h1>${escape(shop.name)}</h1>
         <p>Verified Partner • Fast Delivery</p>
@@ -449,10 +446,9 @@ async function openShop(id) {
     .eq('shop_id', id);
   if (!error) state.products[id] = products;
   
-  const shopProducts = state.products[id] || [];
   document.getElementById('productGrid').innerHTML = shopProducts.map((p, idx) => `
     <div class="card">
-      <img src="${p.image}">
+      <img src="${p.image_url || p.image}">
       <div class="card-body">
         <div class="card-title">${escape(p.name)}</div>
         <div class="card-meta">
@@ -491,7 +487,7 @@ function renderCart() {
     total += item.price * item.qty;
     return `
       <div class="cart-item">
-        <img src="${item.image}">
+        <img src="${item.image_url || item.image}">
         <div style="flex:1">
           <div style="font-weight:600; font-size:14px">${escape(item.name)}</div>
           <div style="font-size:12px; color:#666">${escape(item.shopName)}</div>
@@ -611,7 +607,7 @@ async function submitShop() {
       .from('shops')
       .insert([{
         name,
-        image: imageUrl,
+        image_url: imageUrl,
         status: 'pending',
         owner: state.loggedInVendorEmail
       }]);
@@ -634,7 +630,7 @@ function renderVendorDash() {
   const myShops = state.shops.filter(s => s.owner === state.loggedInVendorEmail);
   grid.innerHTML = myShops.map(s => `
     <div class="card" style="cursor:default">
-      <img src="${s.image}">
+      <img src="${s.image_url || s.image}">
       <div class="card-body">
         <div style="display:flex; justify-content:space-between">
           <div class="card-title">${escape(s.name)}</div>
@@ -775,7 +771,7 @@ function renderPending() {
   const pending = state.shops.filter(s => s.status === 'pending');
   box.innerHTML = pending.map(s => `
     <div style="display:flex; align-items:center; gap:15px; background:#f3f4f6; padding:10px; border-radius:12px; margin-bottom:10px">
-      <img src="${s.image}" style="width:50px; height:50px; border-radius:8px">
+      <img src="${s.image_url || s.image}" style="width:50px; height:50px; border-radius:8px">
       <div style="flex:1">
         <b>${escape(s.name)}</b><br>
         <span style="font-size:11px; color:#666">Owner: ${escape(s.owner || 'Unknown')}</span>
@@ -827,7 +823,7 @@ async function saveProduct() {
       .insert([{
         name,
         price: parseFloat(price),
-        image: imageUrl,
+        image_url: imageUrl,
         shop_id: activeManageId
       }]);
 
@@ -859,7 +855,7 @@ function renderManageProducts() {
   list.innerHTML = items.map((p, i) => `
     <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-top:1px solid #eee">
       <div style="display:flex; align-items:center; gap:10px">
-        <img src="${p.image}" style="width:40px; height:40px; border-radius:4px; object-fit:cover">
+        <img src="${p.image_url || p.image}" style="width:40px; height:40px; border-radius:4px; object-fit:cover">
         <div>${escape(p.name)} - <b>₹${p.price}</b></div>
       </div>
       <div style="display:flex; gap:5px">
@@ -947,7 +943,7 @@ function filterShops(q) {
   const filtered = state.shops.filter(s => s.status === 'approved' && s.name.toLowerCase().includes(q.toLowerCase()));
   grid.innerHTML = filtered.map(s => `
     <div class="card" onclick="openShop('${s.id}')">
-      <img src="${s.image}">
+      <img src="${s.image_url || s.image}">
       <div class="card-body">
         <div class="card-title">${escape(s.name)}</div>
         <div class="card-meta">
@@ -970,41 +966,6 @@ function saveSettings() {
   alert('Profile updated!');
 }
 
-function seedData() {
-  if (state.shops.length > 0) return;
-  
-  const dummyShops = [
-    { id: 's1', name: 'Green Grocery', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500', status: 'approved' },
-    { id: 's2', name: 'Tech Hub', image: 'https://images.unsplash.com/photo-1531297484001-80022131f5a1?w=500', status: 'approved' },
-    { id: 's3', name: 'The Tea Room', image: 'https://images.unsplash.com/photo-1544787210-22bb8114620d?w=500', status: 'approved' }
-  ];
-  
-  const dummyProducts = {
-    's1': [
-      { name: 'Organic Red Apples', price: 120, image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6bcd6?w=300' },
-      { name: 'Fresh Bananas (Dozen)', price: 60, image: 'https://images.unsplash.com/photo-1571771894821-ad99026a09b7?w=300' },
-      { name: 'Organic Baby Spinach', price: 45, image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?w=300' }
-    ],
-    's2': [
-      { name: 'Wireless Mouse', price: 899, image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=300' },
-      { name: 'USB-C Fast Cable', price: 250, image: 'https://images.unsplash.com/photo-1611532736579-6b16e2b50449?w=300' },
-      { name: 'Power Bank 20kmAh', price: 1499, image: 'https://images.unsplash.com/photo-1609592424212-9854737b4f53?w=300' }
-    ],
-    's3': [
-      { name: 'Premium Masala Chai', price: 150, image: 'https://images.unsplash.com/photo-1594631252845-29fc45865157?w=300' },
-      { name: 'Matcha Green Tea', price: 450, image: 'https://images.unsplash.com/photo-1582793988951-9aed5509eb97?w=300' },
-      { name: 'Earl Grey Special', price: 299, image: 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=300' }
-    ]
-  };
-  
-  state.shops = dummyShops;
-  state.products = dummyProducts;
-  if (!state.user.name) {
-    state.user = { name: "Demo User", address: "123 Doru Lane, Innovation City", phone: "+91 98765 43210" };
-  }
-  saveState();
-}
-
 function escape(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -1015,28 +976,48 @@ async function migrateToSupabase() {
   // Migrate Shops
   const localShops = JSON.parse(localStorage.getItem('doru_shops') || '[]');
   if (localShops.length > 0) {
-    const { data, error } = await supabaseClient.from('shops').upsert(localShops);
-    if (!error) console.log('Shops migrated to Supabase!');
+    const formattedShops = localShops.map(s => ({
+      ...s,
+      image_url: s.image_url || s.image
+    }));
+    const { data, error } = await supabaseClient.from('shops').upsert(formattedShops);
+    if (!error) {
+      console.log('Shops migrated to Supabase!');
+      localStorage.removeItem('doru_shops');
+    }
     else console.error('Error migrating shops:', error);
   }
-  // Migrate Products (state.products is an object { shop_id: [products] })
+  // Migrate Products
   const localProductsMap = JSON.parse(localStorage.getItem('doru_products') || '{}');
   for (const shopId in localProductsMap) {
-    const products = localProductsMap[shopId].map(p => ({ ...p, shop_id: shopId }));
+    const products = localProductsMap[shopId].map(p => ({ 
+      ...p, 
+      shop_id: shopId,
+      image_url: p.image_url || p.image
+    }));
     if (products.length > 0) {
       const { error } = await supabaseClient.from('products').upsert(products);
-      if (!error) console.log(`Products for shop ${shopId} migrated!`);
+      if (!error) {
+        console.log(`Products for shop ${shopId} migrated!`);
+      }
     }
   }
+  localStorage.removeItem('doru_products');
 }
 
 // Init
-seedData();
-updateUI();
-
-if (state.shops.length > 0 || Object.keys(state.products).length > 0) {
-  migrateToSupabase();
+async function init() {
+  const localShops = JSON.parse(localStorage.getItem('doru_shops') || '[]');
+  const localProducts = JSON.parse(localStorage.getItem('doru_products') || '{}');
+  
+  if (localShops.length > 0 || Object.keys(localProducts).length > 0) {
+    await migrateToSupabase();
+  }
+  
+  await updateUI();
 }
+
+init();
 </script>
 </body>
 </html>
