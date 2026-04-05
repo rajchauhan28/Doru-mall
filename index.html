@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DoruMart - Premium Delivery</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Secure: Check for Vercel Environment Variables first
+  const SUPABASE_URL = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const SUPABASE_ANON_KEY = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+
+  if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+</script>
 <script src="js/supabase-config.js"></script>
 <script src="js/app.js"></script>
 <link rel="stylesheet" href="css/style.css">

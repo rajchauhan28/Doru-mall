@@ -41,7 +41,7 @@ function closeModal() {
 
 // --- UI Rendering ---
 async function updateUI() {
-  let query = supabaseClient.from('shops').select('*');
+  let query = window.supabaseClient.from('shops').select('*');
   
   if (state.loggedInVendorEmail) {
     query = query.or(`status.eq.approved,owner.eq.${state.loggedInVendorEmail}`);
@@ -98,7 +98,7 @@ async function openShop(id) {
     </div>
   `;
   
-  const { data: products, error } = await supabaseClient
+  const { data: products, error } = await window.supabaseClient
     .from('products')
     .select('*')
     .eq('shop_id', id);
@@ -202,7 +202,7 @@ async function completeOrder() {
     customer: { name, phone, address }
   };
   
-  const { error } = await supabaseClient.from('orders').insert([order]);
+  const { error } = await window.supabaseClient.from('orders').insert([order]);
   if (error) return alert('Error saving order: ' + error.message);
 
   state.cart = [];
@@ -251,17 +251,17 @@ async function submitShop() {
   
   try {
     const fileName = `${Date.now()}-${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+    const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
       .from('dorumart-assets')
       .upload(`shops/${fileName}`, file);
     
     if (uploadError) throw uploadError;
 
-    const imageUrl = supabaseClient.storage
+    const imageUrl = window.supabaseClient.storage
       .from('dorumart-assets')
       .getPublicUrl(`shops/${fileName}`).data.publicUrl;
 
-    const { error: insertError } = await supabaseClient
+    const { error: insertError } = await window.supabaseClient
       .from('shops')
       .insert([{
         name,
@@ -466,17 +466,17 @@ async function saveProduct() {
   
   try {
     const fileName = `${Date.now()}-${file.name}`;
-    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+    const { data: uploadData, error: uploadError } = await window.supabaseClient.storage
       .from('dorumart-assets')
       .upload(`products/${fileName}`, file);
     
     if (uploadError) throw uploadError;
 
-    const imageUrl = supabaseClient.storage
+    const imageUrl = window.supabaseClient.storage
       .from('dorumart-assets')
       .getPublicUrl(`products/${fileName}`).data.publicUrl;
 
-    const { error: insertError } = await supabaseClient
+    const { error: insertError } = await window.supabaseClient
       .from('products')
       .insert([{
         name,
@@ -492,7 +492,7 @@ async function saveProduct() {
     pImage.value = '';
     
     // Refresh products in state and UI
-    const { data: products, error: fetchError } = await supabaseClient
+    const { data: products, error: fetchError } = await window.supabaseClient
       .from('products')
       .select('*')
       .eq('shop_id', activeManageId);
@@ -561,7 +561,7 @@ function deleteProduct(i) {
 
 // --- Orders Rendering ---
 async function renderOrders() {
-  const { data: orders, error } = await supabaseClient
+  const { data: orders, error } = await window.supabaseClient
     .from('orders')
     .select('*')
     .eq('customer->phone', state.user.phone)
@@ -638,7 +638,7 @@ async function migrateToSupabase() {
       ...s,
       image_url: s.image_url || s.image
     }));
-    const { data, error } = await supabaseClient.from('shops').upsert(formattedShops);
+    const { data, error } = await window.supabaseClient.from('shops').upsert(formattedShops);
     if (!error) {
       console.log('Shops migrated to Supabase!');
       localStorage.removeItem('doru_shops');
@@ -654,7 +654,7 @@ async function migrateToSupabase() {
       image_url: p.image_url || p.image
     }));
     if (products.length > 0) {
-      const { error } = await supabaseClient.from('products').upsert(products);
+      const { error } = await window.supabaseClient.from('products').upsert(products);
       if (!error) {
         console.log(`Products for shop ${shopId} migrated!`);
       }
