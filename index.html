@@ -928,9 +928,32 @@ function escape(text) {
   return div.innerHTML;
 }
 
+async function migrateToSupabase() {
+  // Migrate Shops
+  const localShops = JSON.parse(localStorage.getItem('doru_shops') || '[]');
+  if (localShops.length > 0) {
+    const { data, error } = await supabaseClient.from('shops').upsert(localShops);
+    if (!error) console.log('Shops migrated to Supabase!');
+    else console.error('Error migrating shops:', error);
+  }
+  // Migrate Products (state.products is an object { shop_id: [products] })
+  const localProductsMap = JSON.parse(localStorage.getItem('doru_products') || '{}');
+  for (const shopId in localProductsMap) {
+    const products = localProductsMap[shopId].map(p => ({ ...p, shop_id: shopId }));
+    if (products.length > 0) {
+      const { error } = await supabaseClient.from('products').upsert(products);
+      if (!error) console.log(`Products for shop ${shopId} migrated!`);
+    }
+  }
+}
+
 // Init
 seedData();
 updateUI();
+
+if (state.shops.length > 0 || Object.keys(state.products).length > 0) {
+  migrateToSupabase();
+}
 </script>
 </body>
 </html>
