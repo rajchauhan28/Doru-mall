@@ -385,7 +385,13 @@ function closeModal() {
 }
 
 // --- UI Rendering ---
-function updateUI() {
+async function updateUI() {
+  const { data: shops, error } = await supabaseClient
+    .from('shops')
+    .select('*')
+    .eq('status', 'approved');
+  if (!error) state.shops = shops;
+
   renderShops();
   renderCart();
   renderOrders();
@@ -417,7 +423,7 @@ function renderShops() {
   `).join('') || '<p>No shops found.</p>';
 }
 
-function openShop(id) {
+async function openShop(id) {
   const shop = state.shops.find(s => s.id === id);
   state.activeShop = shop;
   showView('shopDetail');
@@ -432,8 +438,14 @@ function openShop(id) {
     </div>
   `;
   
-  const products = state.products[id] || [];
-  document.getElementById('productGrid').innerHTML = products.map((p, idx) => `
+  const { data: products, error } = await supabaseClient
+    .from('products')
+    .select('*')
+    .eq('shop_id', id);
+  if (!error) state.products[id] = products;
+  
+  const shopProducts = state.products[id] || [];
+  document.getElementById('productGrid').innerHTML = shopProducts.map((p, idx) => `
     <div class="card">
       <img src="${p.image}">
       <div class="card-body">
