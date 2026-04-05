@@ -61,7 +61,7 @@ Call `migrateToSupabase()` in the initialization phase and verify data in the Su
 **Files:**
 - Modify: `index.html`
 
-- [ ] **Step 1: Update `updateUI` to Fetch Data**
+- [x] **Step 1: Update `updateUI` to Fetch Data**
 Change `updateUI` to be `async` and fetch shops from Supabase instead of local state.
 
 ```javascript
@@ -73,7 +73,7 @@ async function updateUI() {
 }
 ```
 
-- [ ] **Step 2: Update `openShop` to Fetch Products**
+- [x] **Step 2: Update `openShop` to Fetch Products**
 Fetch products for the active shop from the Supabase `products` table.
 
 ```javascript
