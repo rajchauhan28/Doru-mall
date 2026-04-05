@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>DoruMart - Premium Delivery</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --primary: #16a34a;
@@ -334,6 +335,11 @@ input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-
 </div>
 
 <script>
+// --- Supabase Config (Placeholders) ---
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 // --- State Management ---
 let state = {
   user: JSON.parse(localStorage.getItem('doru_user') || '{"name":"","address":"","phone":""}'),
