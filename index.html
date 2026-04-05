@@ -386,10 +386,15 @@ function closeModal() {
 
 // --- UI Rendering ---
 async function updateUI() {
-  const { data: shops, error } = await supabaseClient
-    .from('shops')
-    .select('*')
-    .eq('status', 'approved');
+  let query = supabaseClient.from('shops').select('*');
+  
+  if (state.loggedInVendorEmail) {
+    query = query.or(`status.eq.approved,owner.eq.${state.loggedInVendorEmail}`);
+  } else {
+    query = query.eq('status', 'approved');
+  }
+
+  const { data: shops, error } = await query;
   if (!error) state.shops = shops;
 
   renderShops();
@@ -588,19 +593,38 @@ async function submitShop() {
   const file = newShopImage.files[0];
   if (!name || !file) return alert('Fill all fields');
   
-  const image = await toBase64(file);
-  state.shops.push({
-    id: Date.now().toString(),
-    name,
-    image,
-    status: 'pending',
-    owner: state.loggedInVendorEmail
-  });
-  saveState();
-  newShopName.value = '';
-  newShopImage.value = '';
-  closeModal();
-  alert('Shop sent for admin approval!');
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from('dorumart-assets')
+      .upload(`shops/${fileName}`, file);
+    
+    if (uploadError) throw uploadError;
+
+    const imageUrl = supabaseClient.storage
+      .from('dorumart-assets')
+      .getPublicUrl(`shops/${fileName}`).data.publicUrl;
+
+    const { error: insertError } = await supabaseClient
+      .from('shops')
+      .insert([{
+        name,
+        image: imageUrl,
+        status: 'pending',
+        owner: state.loggedInVendorEmail
+      }]);
+
+    if (insertError) throw insertError;
+
+    newShopName.value = '';
+    newShopImage.value = '';
+    closeModal();
+    alert('Shop sent for admin approval!');
+    updateUI(); 
+  } catch (error) {
+    console.error('Error submitting shop:', error);
+    alert('Error submitting shop: ' + error.message);
+  }
 }
 
 function renderVendorDash() {
@@ -784,12 +808,47 @@ async function saveProduct() {
   const file = pImage.files[0];
   if (!name || !price || !file) return alert('Fill all fields');
   
-  const image = await toBase64(file);
-  state.products[activeManageId] = state.products[activeManageId] || [];
-  state.products[activeManageId].push({ name, price, image });
-  saveState();
-  pName.value = ''; pPrice.value = ''; pImage.value = '';
-  renderManageProducts();
+  try {
+    const fileName = `${Date.now()}-${file.name}`;
+    const { data: uploadData, error: uploadError } = await supabaseClient.storage
+      .from('dorumart-assets')
+      .upload(`products/${fileName}`, file);
+    
+    if (uploadError) throw uploadError;
+
+    const imageUrl = supabaseClient.storage
+      .from('dorumart-assets')
+      .getPublicUrl(`products/${fileName}`).data.publicUrl;
+
+    const { error: insertError } = await supabaseClient
+      .from('products')
+      .insert([{
+        name,
+        price: parseFloat(price),
+        image: imageUrl,
+        shop_id: activeManageId
+      }]);
+
+    if (insertError) throw insertError;
+
+    pName.value = ''; 
+    pPrice.value = ''; 
+    pImage.value = '';
+    
+    // Refresh products in state and UI
+    const { data: products, error: fetchError } = await supabaseClient
+      .from('products')
+      .select('*')
+      .eq('shop_id', activeManageId);
+    
+    if (!fetchError) {
+      state.products[activeManageId] = products;
+      renderManageProducts();
+    }
+  } catch (error) {
+    console.error('Error saving product:', error);
+    alert('Error saving product: ' + error.message);
+  }
 }
 
 function renderManageProducts() {
