@@ -399,7 +399,7 @@ async function updateUI() {
 
   renderShops();
   renderCart();
-  renderOrders();
+  await renderOrders();
   renderVendorDash();
   
   // Update header badge
@@ -529,14 +529,14 @@ function checkout() {
   openModal('checkoutModal');
 }
 
-function completeOrder() {
+async function completeOrder() {
   const name = document.getElementById('checkName').value.trim();
   const phone = document.getElementById('checkPhone').value.trim();
   const address = document.getElementById('checkAddress').value.trim();
   
   if (!name || !phone || !address) return alert('Please fill all delivery details');
   
-  // Optionally update user profile with these details
+  // Update user profile with these details
   state.user = { name, phone, address };
   
   const order = {
@@ -548,7 +548,9 @@ function completeOrder() {
     customer: { name, phone, address }
   };
   
-  state.orders.unshift(order);
+  const { error } = await supabaseClient.from('orders').insert([order]);
+  if (error) return alert('Error saving order: ' + error.message);
+
   state.cart = [];
   saveState();
   closeModal();
@@ -904,8 +906,18 @@ function deleteProduct(i) {
 }
 
 // --- Orders Rendering ---
-function renderOrders() {
+async function renderOrders() {
+  const { data: orders, error } = await supabaseClient
+    .from('orders')
+    .select('*')
+    .eq('customer->phone', state.user.phone)
+    .order('date', { ascending: false });
+
+  if (!error) state.orders = orders || [];
+
   const container = document.getElementById('ordersList');
+  if (!container) return;
+  
   container.innerHTML = state.orders.map(o => `
     <div class="card" style="cursor:default">
       <div class="card-body">
